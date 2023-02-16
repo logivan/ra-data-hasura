@@ -1,11 +1,12 @@
 import { TypeKind, IntrospectionObjectType, FieldNode } from 'graphql';
 import * as gqlTypes from '../graphql-ast-types-browser';
 import getFinalType from '../helpers/getFinalType';
-import { FetchType } from '../types';
+import { FetchType, IntrospectionResult } from '../types';
 
 export type BuildFields = (
   type: IntrospectionObjectType,
   aorFetchType?: FetchType
+  introspectionResult?: IntrospectionResult
 ) => FieldNode[];
 
 export const buildFields: BuildFields = (type) =>

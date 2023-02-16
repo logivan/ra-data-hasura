@@ -41,7 +41,7 @@ export type BuildGqlQueryFactory = (
 
 export const buildGqlQuery: BuildGqlQuery =
   (
-    _,
+    introspectionResult,
     buildFields,
     buildMetaArgs,
     buildArgs,
@@ -53,7 +53,7 @@ export const buildGqlQuery: BuildGqlQuery =
     const apolloArgs = buildApolloArgs(queryType, variables);
     const args = buildArgs(queryType, variables);
     const metaArgs = buildMetaArgs(queryType, metaVariables, aorFetchType);
-    const fields = buildFields(resource.type, aorFetchType);
+    const fields = buildFields(resource.type, aorFetchType, introspectionResult);
     if (
       aorFetchType === GET_LIST ||
       aorFetchType === GET_MANY ||
