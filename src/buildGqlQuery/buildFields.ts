@@ -5,7 +5,7 @@ import { FetchType, IntrospectionResult } from '../types';
 
 export type BuildFields = (
   type: IntrospectionObjectType,
-  aorFetchType?: FetchType
+  aorFetchType?: FetchType,
   introspectionResult?: IntrospectionResult
 ) => FieldNode[];
 
