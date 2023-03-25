@@ -9,16 +9,43 @@ exports.buildQueryFactory = void 0;
 const buildVariables_1 = require('../buildVariables');
 const buildGqlQuery_1 = __importDefault(require('../buildGqlQuery'));
 const getResponseParser_1 = require('../getResponseParser');
+const ra_core_1 = require('ra-core');
 const buildQueryFactory =
   (buildVariablesImpl, buildGqlQueryImpl, getResponseParserImpl) =>
   (introspectionResults) => {
     const knownResources = introspectionResults.resources.map(
       (r) => r.type.name
     );
+    const locations = introspectionResults.resources.find(
+      (r) => r.type.name === 'locations'
+    );
+    const location_near_to_queries = introspectionResults.queries.find(
+      (r) => r.name === 'locations_near_to'
+    );
+    const locations_deep_copy = JSON.parse(JSON.stringify(locations));
+    const location_near_to = Object.assign(
+      Object.assign({}, locations_deep_copy),
+      {
+        type: Object.assign(Object.assign({}, locations_deep_copy.type), {
+          name: 'locations_near_to',
+        }),
+        GET_LIST: Object.assign(
+          Object.assign({}, locations_deep_copy.GET_LIST),
+          location_near_to_queries
+        ),
+      }
+    );
     return (aorFetchType, resourceName, params) => {
-      const resource = introspectionResults.resources.find(
-        (r) => r.type.name === resourceName
-      );
+      const nearResource =
+        aorFetchType === ra_core_1.GET_LIST &&
+        resourceName === 'locations_near_to'
+          ? location_near_to
+          : null;
+      const resource =
+        nearResource ||
+        introspectionResults.resources.find(
+          (r) => r.type.name === resourceName
+        );
       if (!resource) {
         if (knownResources.length) {
           throw new Error(

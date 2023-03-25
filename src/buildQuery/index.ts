@@ -1,7 +1,13 @@
 import { buildVariables } from '../buildVariables';
 import buildGqlQuery, { BuildGqlQueryFactory } from '../buildGqlQuery';
 import { getResponseParser, GetResponseParser } from '../getResponseParser';
-import type { FetchType, IntrospectionResult } from '../types';
+import type {
+  FetchType,
+  IntrospectedResource,
+  IntrospectionResult,
+} from '../types';
+import { IntrospectionObjectType } from 'graphql';
+import { GET_LIST } from 'ra-core';
 
 export type QueryResponse = {
   data: any;
@@ -34,11 +40,34 @@ export const buildQueryFactory: BuildQueryFactory =
     const knownResources = introspectionResults.resources.map(
       (r) => r.type.name
     );
+    const locations = introspectionResults.resources.find(
+      (r) => r.type.name === 'locations'
+    );
+    const location_near_to_queries = introspectionResults.queries.find(
+      (r) => r.name === 'locations_near_to'
+    ) as IntrospectionObjectType;
+    const locations_deep_copy = JSON.parse(
+      JSON.stringify(locations)
+    ) as IntrospectedResource;
+    const location_near_to: IntrospectedResource = {
+      ...locations_deep_copy,
+      type: { ...locations_deep_copy.type, name: 'locations_near_to' },
+      GET_LIST: {
+        ...locations_deep_copy.GET_LIST,
+        ...location_near_to_queries,
+      },
+    };
 
     return (aorFetchType, resourceName, params) => {
-      const resource = introspectionResults.resources.find(
-        (r) => r.type.name === resourceName
-      );
+      const nearResource =
+        aorFetchType === GET_LIST && resourceName === 'locations_near_to'
+          ? location_near_to
+          : null;
+      const resource =
+        nearResource ||
+        introspectionResults.resources.find(
+          (r) => r.type.name === resourceName
+        );
 
       if (!resource) {
         if (knownResources.length) {
