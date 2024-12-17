@@ -34,29 +34,38 @@ export type BuildQueryFactory = (
   getResponseParserImpl: GetResponseParser
 ) => BuildQuery;
 
+const getLocationNearToQuery = (introspectionResults: IntrospectionResult) => {
+  const locations = introspectionResults.resources.find(
+    (r) => r.type.name === 'locations'
+  );
+  if (!locations) return null;
+  const location_near_to_queries = introspectionResults.queries.find(
+    (r) => r.name === 'locations_near_to'
+  ) as IntrospectionObjectType;
+  if (!location_near_to_queries) return null;
+  if (typeof locations === 'string') return null;
+  const locations_deep_copy = JSON.parse(
+    JSON.stringify(locations)
+  ) as IntrospectedResource;
+  const location_near_to: IntrospectedResource = {
+    ...locations_deep_copy,
+    type: { ...locations_deep_copy.type, name: 'locations_near_to' },
+    GET_LIST: {
+      ...locations_deep_copy.GET_LIST,
+      ...location_near_to_queries,
+    },
+  };
+  return location_near_to;
+};
+
 export const buildQueryFactory: BuildQueryFactory =
   (buildVariablesImpl, buildGqlQueryImpl, getResponseParserImpl) =>
   (introspectionResults) => {
     const knownResources = introspectionResults.resources.map(
       (r) => r.type.name
     );
-    const locations = introspectionResults.resources.find(
-      (r) => r.type.name === 'locations'
-    );
-    const location_near_to_queries = introspectionResults.queries.find(
-      (r) => r.name === 'locations_near_to'
-    ) as IntrospectionObjectType;
-    const locations_deep_copy = JSON.parse(
-      JSON.stringify(locations)
-    ) as IntrospectedResource;
-    const location_near_to: IntrospectedResource = {
-      ...locations_deep_copy,
-      type: { ...locations_deep_copy.type, name: 'locations_near_to' },
-      GET_LIST: {
-        ...locations_deep_copy.GET_LIST,
-        ...location_near_to_queries,
-      },
-    };
+
+    const location_near_to = getLocationNearToQuery(introspectionResults);
 
     return (aorFetchType, resourceName, params) => {
       const nearResource =
